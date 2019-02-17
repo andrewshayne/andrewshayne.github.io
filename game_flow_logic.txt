@@ -1,0 +1,32 @@
+game flow logic
+
+one user designates himself as admin
+
+admin starts game and current number of players is stored in a var
+
+admin selects the roles to use, starts game
+
+cards are shuffled and assigned
+
+
+*** begin night phase *** (game logic begins here)
+
+
+each player performs their action in order, response to Server
+
+server prompts each role only, waits for response
+
+
+
+DATA:
+  players have index 1 to n and a random role
+
+
+
+SERVER FUNCTIONS:
+  prompt_player(role) //tells only player(s) with certain role to do action
+  wait_for_player_action(role) //waits for player(s) to respond "DONE"
+  start_timer() //starts day timer
+
+CLIENT FUNCTIONS:
+  (unique function for every role)

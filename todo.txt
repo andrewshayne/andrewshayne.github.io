@@ -1,0 +1,14 @@
+Todo list:
+
+- make werewolves and masons do group action (WITHOUT SOLO INSTRUCTION)
+- display everyone's votes at the end along with the killed player(s)
+	- allow votes, retrieve them, send info back to clients
+
+
+STRETCH
+- get working tokens
+
+relative numbering!!
+fuzzy lookup, file manager
+surround.vim
+comments

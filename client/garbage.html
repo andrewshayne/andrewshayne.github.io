@@ -1,0 +1,139 @@
+<!doctype html>
+
+<html>
+
+<div>WEREWOLF</div>
+
+<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+<script>
+	var ctx = document.getElementById("ctx").getContext("2d");
+	ctx.font = '30px Arial';
+
+	var socket = io();
+
+
+	//on connection... ?
+	var happy = function() {
+		socket.on('newPositions', function(data, NUM_PLAYERS) {
+			ctx.fillStyle = 'black';
+
+			ctx.font = '30px Arial';
+			ctx.clearRect(0,0,500,500);
+			for(var i = 0; i < data.length; i++)
+				ctx.fillText(data[i].name, data[i].x, data[i].y);
+
+			ctx.font = '20px Arial';
+			ctx.fillText('#players: ' + NUM_PLAYERS, 380, 26);
+
+			console.log(data.msg);
+		});
+		/////////PROBLEM BELOW??? LOOK AT THAT GARBAGE!!!
+
+//
+//
+//
+//
+
+
+
+
+
+		socket.on('draw players', NUM_PLAYERS, PLAYER_ID_NAME_LIST) {
+			var x = 60;
+			var y = 80;
+			ctx.fillStyle = 'magenta';
+			ctx.font = '45px Arial';
+			ctx.clearRect(0,0,500,500);
+			for(i = 0; i < NUM_PLAYERS + 3; i++) {
+				ctx.fillText(PLAYER_ID_NAME_LIST[i].index + '. ' + PLAYER_ID_NAME_LIST[i].name, x, y);
+				y += 45;
+			}
+		}
+
+		socket.on('settings', function(ROLE_LIST, NUM_ROLES, PLAYER_ROLES_LIST, NUM_PLAYERS, PLAYER_ID_NAME_LIST) {
+			ctx.font = '15px Arial';
+
+			var x = 8;
+			var y = 20;
+			ctx.fillStyle = 'blue';
+			ctx.fillText('role list', x, y);
+			y += 20;
+			for(i = 0; i < NUM_ROLES; i++) {
+				ctx.fillText((i + 1) + '. ' + ROLE_LIST[i], x, y);
+				y += 20;
+			}
+
+			var x = 140;
+			var y = 20;
+			ctx.fillStyle = 'red';
+			ctx.fillText('selected roles', x, y);
+			y += 20;
+			for(i = 0; i < NUM_PLAYERS + 3; i++) {
+				ctx.fillText((i + 1) + '. ' + PLAYER_ROLES_LIST[i], x, y);
+				y += 20;
+			}
+
+			var x = 260;
+			var y = 20;
+			ctx.fillStyle = 'green';
+			ctx.fillText('players', x, y);
+			y += 20;
+			for(i = 0; i < NUM_PLAYERS + 3; i++) {
+				ctx.fillText(PLAYER_ID_NAME_LIST[i].index + '. ' + PLAYER_ID_NAME_LIST[i].name, x, y);
+				y += 20;
+			}
+
+		});
+	}
+
+	document.onkeydown = function(event) {
+		if(event.keyCode === 37)
+			socket.emit('keyPress',{inputId:'left',state:true});
+		else if(event.keyCode === 39)
+			socket.emit('keyPress',{inputId:'right',state:true});
+		else if(event.keyCode === 38)
+			socket.emit('keyPress',{inputId:'up',state:true});
+		else if(event.keyCode === 40)
+			socket.emit('keyPress',{inputId:'down',state:true});
+	}
+
+	document.onkeyup = function(event) {
+		if(event.keyCode === 37)
+			socket.emit('keyPress',{inputId:'left',state:false});
+    else if(event.keyCode === 39)
+      socket.emit('keyPress',{inputId:'right',state:false});
+    else if(event.keyCode === 38)
+    	socket.emit('keyPress',{inputId:'up',state:false});
+    else if(event.keyCode === 40)
+			socket.emit('keyPress',{inputId:'down',state:false});
+	}
+
+</script>
+
+<div>Enter your name</div> <!-- change this message to be alterable -->
+
+<form action="">
+	<input id="m" autocomplete="off" /><button>Submit</button>
+</form>
+
+<!--
+<form method="post" action="/">
+	<input id="m" autocomplete="off">
+	<input type="submit" value="Submit">
+</form>
+-->
+
+
+<button onclick="happy()">Join</button>
+
+<div>
+</br>
+	When voting, enter the name or id of the player you wish to kill.
+	You may change your decision at any time before the game is over.
+</div>
+
+</html>

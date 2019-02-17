@@ -1,0 +1,387 @@
+<!doctype html>
+
+<html>
+<body>
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
+  </head>
+  
+<div class="container-fluid">
+
+<h2><%= NUM_PLAYERS %></h2>
+
+<div class="row">
+	<div class="col-8 card"><p>oo</p></div>
+	<div class="col-4 card"><p>oo</p></div>
+</div>
+
+
+<div>Enter your name</div> <!-- change this message to be alterable -->
+
+<form action="">
+	<input id="m" autocomplete="off" /><button>Submit</button>
+</form>
+
+<div class="row" style="padding:100px">
+	<div class="col card">o</div>
+	<div class="col card">o</div>
+	<div class="col card">o</div>
+	<div class="col card">o</div>
+	<div class="col card">o</div>
+	<div class="col card">o</div>
+</div>
+
+<!-- <button onclick="happy()">Join</button> -->
+
+<div>
+	</br>
+	RULES: When the game begins, wait for your night action. Once it is your turn,</br>
+	follow your role's on-screen instructions, typing the number of the player/center</br>
+	roles you wish to select for your action (if you have an action). Entering an</br>
+	invalid number will result in no action. When the day begins, you may cast your</br>
+	vote at any time using the same convention.</br></br>
+
+	For any text-box submission, you may change your submission by resubmitting your</br>
+	entries before the time is up. This works with your name, night actions, and your</br>
+	kill vote.</br></br>
+
+	NOTE: The last or last 2 submissions are always used, ignoring the previous ones.</br</br>
+
+	PLEASE ENTER YOUR SELECTION(S) AS SUCH:</br></br>
+	{  1  ==>  'Submit'  ==>  2  ==>  'Submit'  }</br>
+	This would be a valid move for the troublemaker, who is player 3.</br>
+</div>
+
+  
+</div class="container-fluid">
+
+<canvas id="ctx" width="800" height="800" style="border:1px solid #000000;"></canvas>
+
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+<script>
+	window.requestAnimationFrame = window.requestAnimationFrame ||
+								   window.mozRequestAnimationFrame ||
+								   window.webkitRequestAnimationFrame ||             
+								   window.msRequestAnimationFrame;
+
+	var ctx = document.getElementById("ctx").getContext("2d");
+	ctx.font = '30px Arial';
+
+	var _new_positions_on = false;
+	var _settings_on = false;
+	var _draw_players_on = false;
+	var _display_role_on = false;
+	var _turn_info_on = false;
+	var _vote_on = false;
+	var _instructions_on = false;
+	var _learn_on = false;
+	var _is_admin = false;
+
+	var _ROLE_LIST = [];
+	_ROLE_LIST.push(' ');
+	var _NUM_ROLES = 0;
+	var _PLAYER_ROLES_LIST = [];
+	_PLAYER_ROLES_LIST.push(' ');
+	var _NUM_PLAYERS = 0;
+	var _PLAYER_ID_NAME_LIST = [];
+	_PLAYER_ID_NAME_LIST.push({name:' ',id:' '});
+	var _NUM_PLAYERS = 0;
+	var _GAME_STARTED = false;
+	var _roles = [];
+	var _player_turn = ' ';
+	var _timer = ' ';
+	var _my_vote = ' ';
+	var _your_role = ' ';
+	var _instructions = ' ';
+	var _learn = ' ';
+	var _data = [];
+	var _final_vote = ' ';
+
+	var socket = io();
+
+	$(function () {
+		$('form').submit(function(){
+			socket.emit('add name', $('#m').val());
+			$('#m').val('');
+			return false;
+		});
+	});
+
+	socket.on('newPositions', function(data, NUM_PLAYERS, GAME_STARTED, 
+		PLAYER_ROLES_LIST) {
+		_data = data;
+		_NUM_PLAYERS = NUM_PLAYERS;
+		_new_positions_on = true;
+		_GAME_STARTED = GAME_STARTED;
+		_final_vote = ' ';
+		_roles = PLAYER_ROLES_LIST;
+	});
+
+	//MAKE SO EVERYONE GETS SETTINGS BUT ONLY ADMIN SEES!!!
+	socket.on('settings', function(ROLE_LIST, NUM_ROLES, PLAYER_ROLES_LIST, NUM_PLAYERS, PLAYER_ID_NAME_LIST, GAME_STARTED, IS_ADMIN) {
+		_ROLE_LIST = ROLE_LIST;
+		_NUM_ROLES = NUM_ROLES;
+		_PLAYER_ROLES_LIST = PLAYER_ROLES_LIST;
+		_NUM_PLAYERS = NUM_PLAYERS;
+		//_PLAYER_ID_NAME_LIST = JSON.parse(JSON.stringify(PLAYER_ID_NAME_LIST));
+		_PLAYER_ID_NAME_LIST = PLAYER_ID_NAME_LIST;
+		_settings_on = true;
+		//_GAME_STARTED = GAME_STARTED;
+		_is_admin = IS_ADMIN;
+	});
+
+	socket.on('draw players', function(NUM_PLAYERS, PLAYER_ID_NAME_LIST) {
+		_NUM_PLAYERS = NUM_PLAYERS;
+		_PLAYER_ID_NAME_LIST = PLAYER_ID_NAME_LIST;
+		_draw_players_on = true;
+	});
+
+	socket.on('display role', function(data, GAME_STARTED) {
+		_your_role = data;
+		_display_role_on = true;
+		_GAME_STARTED = GAME_STARTED;
+	});
+
+	socket.on('turn info', function(player_turn, timer) {
+		_player_turn = player_turn;
+		_timer = timer;
+		_turn_info_on = true;
+	});
+
+	socket.on('vote', function(my_vote) {
+		_my_vote = my_vote;
+		_vote_on = true;
+	});
+
+	socket.on('instructions', function(instructions) {
+		_instructions = instructions;
+		_instructions_on = true;
+	});
+
+	socket.on('learn', function(data) {
+		_learn = data;
+		_learn_on = true;
+	});
+
+	socket.on('result', function(final_vote) {
+		_final_vote = 'The village killed: ';
+		for(var i = 0; i < final_vote.length; i++)
+			_final_vote += final_vote[i] + ' ';
+	});
+
+	var limit = 5000;
+	var start = null;
+
+	function draw_all(timestep) {
+		
+		var x = 0;
+		var y = 0;
+		
+		//if(start === null)
+		//	start = timestep;
+
+		//var progress = timestep - start;
+
+		//clear
+		ctx.clearRect(0,0,800,800);
+
+		x = 600;
+		y = 20;
+		ctx.fillStyle = 'red';
+		ctx.font = '15px Arial';
+		ctx.fillText('selected roles', x, y);
+		y += 20;
+		for(var i = 0; i < _roles.length; i++) {
+			ctx.fillText((i + 1) + '. ' + _roles[i], x, y);
+			y += 20;
+		}
+
+		if(!_GAME_STARTED) {
+			//newPositions
+			if(_new_positions_on) {
+				console.log('???');
+				ctx.fillStyle = 'black';
+				ctx.font = '30px Arial';
+				for(var i = 0; i < _data.length; i++) {
+					ctx.fillText(_data[i].name, _data[i].x, _data[i].y);
+				}
+				ctx.font = '20px Arial';
+				ctx.fillText('#players: ' + _NUM_PLAYERS, 380, 26);
+			}
+			_instructions = ' ';
+		}
+		else {
+			//draw players
+			if(_draw_players_on) {
+				x = 60;
+				y = 300;
+				ctx.fillStyle = 'magenta';
+				ctx.font = '45px Arial';
+				for(var i = 0; i < _NUM_PLAYERS; i++) {
+					ctx.fillText((i + 1) + '. ' + _PLAYER_ID_NAME_LIST[i].name,x,y);
+					y += 45;
+				}
+				x = 480;
+				y = 300;
+				for(var i = _NUM_PLAYERS; i < _NUM_PLAYERS + 3; i++) {
+					ctx.fillText((i + 1) + '. ' + _PLAYER_ID_NAME_LIST[i].name,x,y);
+					y += 45;
+				}
+			}
+
+			//display role
+			if(_display_role_on) {
+				x = 20;
+				y = 680;
+				ctx.fillStyle = 'black';
+				ctx.font = '45px Arial';
+				ctx.fillText('your role: ' + _your_role,x,y);
+			}
+
+			//learn
+			if(_learn_on) {
+				x = 10;
+				y = 620;
+				ctx.fillStyle = 'black';
+				ctx.font = '24px Arial';
+				ctx.fillText(_learn,x,y);
+			}
+
+			//turn info
+			if(_turn_info_on) {
+				x = 400;
+				y = 780;
+				ctx.fillStyle = 'black';
+				ctx.font = '30px Arial';
+				ctx.fillText('current turn: ' + _player_turn  + ', ' + _timer,x,y);
+			}
+
+			//vote
+			if(_vote_on) {
+				x = 20;
+				y = 710;
+				ctx.fillStyle = 'black';
+				ctx.font = '45px Arial';
+				ctx.fillText('vote to kill: ' + _my_vote,x,y);
+			}
+
+			//instructions
+			if(_instructions_on) {
+				x = 10;
+				y = 580;
+				ctx.fillStyle = 'black';
+				ctx.font = '18px Arial';
+				ctx.fillText(_instructions,x,y);
+			}
+
+			//display final vote
+			x = 20;
+			y = 480;
+			ctx.fillStyle = 'black';
+			ctx.font = '30px Arial';
+			ctx.fillText(_final_vote,x,y);
+		}
+
+		//settings
+		if(_is_admin) {
+
+			ctx.font = '15px Arial';
+			x = 8;
+			y = 20;
+			ctx.fillStyle = 'blue';
+			ctx.fillText('role order', x, y);
+			y += 20;
+			for(var i = 0; i < _NUM_ROLES; i++) {
+				ctx.fillText((i + 1) + '. ' + _ROLE_LIST[i], x, y);
+				y += 20;
+			}
+
+			x = 140;
+			y = 20;
+			ctx.fillStyle = 'red';
+			ctx.fillText('selected roles', x, y);
+			y += 20;
+			for(var i = 0; i < _NUM_PLAYERS + 3; i++) {
+				ctx.fillText((i + 1) + '. ' + _PLAYER_ROLES_LIST[i], x, y);
+				y += 20;
+			}
+
+			if(_GAME_STARTED) {
+				x = 260;
+				y = 20;
+				ctx.fillStyle = 'green';
+				ctx.fillText('players', x, y);
+				y += 20;
+				for(var i = 0; i < _NUM_PLAYERS; i++) {
+					ctx.fillText((i + 1) + '. ' + _PLAYER_ID_NAME_LIST[i].name + ', ' + _PLAYER_ID_NAME_LIST[i].id, x, y);
+					y += 20;
+				}
+				for(var i = _NUM_PLAYERS; i < _NUM_PLAYERS + 3; i++) {
+					ctx.fillText((i + 1) + '. ' + _PLAYER_ID_NAME_LIST[i].name,x,y);
+					y += 20;
+				}
+			}
+		}
+
+
+		//if(progress < limit)
+		window.requestAnimationFrame(draw_all);
+	}
+	window.requestAnimationFrame(draw_all);
+
+
+	document.onkeydown = function(event) {
+		if(event.keyCode === 37) {
+			socket.emit('keyPress',{inputId:'left',state:true});
+		}
+		else if(event.keyCode === 39) {
+			socket.emit('keyPress',{inputId:'right',state:true});
+		}
+		else if(event.keyCode === 38) {
+			socket.emit('keyPress',{inputId:'up',state:true});
+		}
+		else if(event.keyCode === 40) {
+			socket.emit('keyPress',{inputId:'down',state:true});
+		}
+	}
+
+	document.onkeyup = function(event) {
+		if(event.keyCode === 37) {
+			socket.emit('keyPress',{inputId:'left',state:false});
+		}
+		else if(event.keyCode === 39) {
+			socket.emit('keyPress',{inputId:'right',state:false});
+		}
+		else if(event.keyCode === 38) {
+			socket.emit('keyPress',{inputId:'up',state:false});
+		}
+		else if(event.keyCode === 40) {
+			socket.emit('keyPress',{inputId:'down',state:false});
+		}
+	}
+</script>
+
+<script src="ejs.js"></script>
+<script>
+  let people = ['geddy', 'neil', 'alex'],
+      html = ejs.render('<%= people.join(", "); %>', {people: people});
+</script>
+
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</body>
+</html>
